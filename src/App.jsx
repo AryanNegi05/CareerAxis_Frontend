@@ -1,110 +1,60 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { useGetCurrentUserQuery } from './store/api/authApi';
-import { selectIsAuthenticated, selectUserRole, setUser } from './store/features/authSlice';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { CircularProgress, Box } from '@mui/material';
 
-// Import components
-import Navbar from './components/layout/Navbar';
-import ProtectedRoute from './components/auth/ProtectedRoute';
-import LoadingSpinner from './components/ui/LoadingSpinner';
+// Components
+import LandingPage from './components/LandingPage';
+import LoginPage from './components/auth/LoginPage';
+import SignupPage from './components/auth/SignupPage';
+import ProtectedRoute from './components/ProtectedRoutes';
 
-// Import pages
-import HomePage from './pages/HomePage';
-import LoginPage from './pages/auth/LoginPage';
-import SignupPage from './pages/auth/SignupPage';
-import JobsPage from './pages/jobs/JobsPage';
-import JobDetailsPage from './pages/jobs/JobDetailsPage';
-import CreateJobPage from './pages/jobs/CreateJobPage';
-import ApplicationsPage from './pages/applications/ApplicationsPage';
-import ProfilePage from './pages/profile/ProfilePage';
-import DashboardPage from './pages/DashboardPage';
+const theme = createTheme({
+  palette: {
+    primary: { main: '#2563eb', light: '#3b82f6', dark: '#1d4ed8' },
+    secondary: { main: '#7c3aed', light: '#8b5cf6', dark: '#6d28d9' },
+    background: { default: '#f8fafc' },
+  },
+  typography: {
+    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 600 },
+    h3: { fontWeight: 600 },
+  },
+  shape: { borderRadius: 8 },
+});
+
+const LoadingScreen = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh" className="bg-slate-50">
+    <CircularProgress size={40} color="primary" />
+  </Box>
+);
 
 function App() {
-  const dispatch = useDispatch();
-  const isAuthenticated = useSelector(selectIsAuthenticated);
-  const userRole = useSelector(selectUserRole);
-  
-  // Auto-fetch user data on app load if token exists
-  const { data: userData, isLoading, error } = useGetCurrentUserQuery(undefined, {
-    skip: !isAuthenticated,
-  });
-
-  useEffect(() => {
-    if (userData?.user) {
-      dispatch(setUser(userData.user));
-    }
-  }, [userData, dispatch]);
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
   return (
-    <div className="App">
-      <Navbar />
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/jobs" element={<JobsPage />} />
-        <Route path="/jobs/:id" element={<JobDetailsPage />} />
-        
-        {/* Auth routes */}
-        <Route 
-          path="/login" 
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />
-          } 
-        />
-        <Route 
-          path="/signup" 
-          element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <SignupPage />
-          } 
-        />
-
-        {/* Protected routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/applications"
-          element={
-            <ProtectedRoute>
-              <ApplicationsPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Recruiter only routes */}
-        <Route
-          path="/create-job"
-          element={
-            <ProtectedRoute requiredRole="recruiter">
-              <CreateJobPage />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <div className="min-h-screen bg-slate-50">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <div className="p-8">
+                  <h1>Dashboard - Protected Route Working!</h1>
+                  <p>You are successfully authenticated.</p>
+                </div>
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </div>
+    </ThemeProvider>
   );
 }
 
