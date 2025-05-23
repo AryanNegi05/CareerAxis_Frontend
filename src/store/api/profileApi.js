@@ -16,7 +16,7 @@ export const getJobSeekerProfile = () => async (dispatch, getState) => {
     const token = getState().auth.token;
     
     const data = await apiCall('/profile/jobseeker/MyProfile', {}, token);
-
+    console.log(data);
     dispatch(getJobSeekerProfileSuccess(data.profile));
   } catch (error) {
     dispatch(profileFailure(error.message));
@@ -28,15 +28,17 @@ export const updateJobSeekerProfile = (profileData) => async (dispatch, getState
   try {
     dispatch(setProfileLoading(true));
     const token = getState().auth.token;
-
     const formData = new FormData();
     Object.keys(profileData).forEach((key) => {
       if (['skills', 'experience', 'education'].includes(key)) {
-        formData.append(key, JSON.stringify(profileData[key]));
+        formData.append(key, JSON.stringify(profileData[key])); // keep these as JSON strings
+      } else if (key === 'resume' && profileData.resume instanceof File) {
+        formData.append('resume', profileData.resume); // append actual file
       } else {
         formData.append(key, profileData[key]);
       }
     });
+
 
     const data = await apiCall(
       '/profile/jobseeker/updateProfile',

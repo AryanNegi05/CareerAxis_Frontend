@@ -21,6 +21,7 @@ import {
 import { updateJobSeekerProfile } from '../../store/api/profileApi';
 
 const ProfilePage = ({ onBack, profile, loading, error }) => {
+
   const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -56,9 +57,12 @@ const ProfilePage = ({ onBack, profile, loading, error }) => {
 
   useEffect(() => {
     if (profile) {
+      // console.log(profile.user.firstName);
+      // console.log(profile.user.email);
+      
       setFormData({
-        fullName: profile.fullName || '',
-        email: profile.email || '',
+        fullName: profile.user.firstName || '',
+        email: profile.user.email || '',
         phone: profile.phone || '',
         location: profile.location || '',
         bio: profile.bio || '',
@@ -157,6 +161,8 @@ const ProfilePage = ({ onBack, profile, loading, error }) => {
 
   const handleSave = async () => {
     try {
+      console.log(formData);
+      
       await dispatch(updateJobSeekerProfile(formData));
       setIsEditing(false);
     } catch (error) {
@@ -239,35 +245,24 @@ const ProfilePage = ({ onBack, profile, loading, error }) => {
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* name - unchangable */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              {isEditing ? (
-                <input
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="text-gray-900">{profile?.fullName || 'Not provided'}</p>
-              )}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+              
+                <p className="text-gray-900">
+                {(profile.user.firstName && profile.user.lastName)
+                  ? `${profile.user.firstName} ${profile.user.lastName}`
+                  : 'Not provided'}
+                </p>
+              
             </div>
+            {/* email - unchangable hai ye */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              {isEditing ? (
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              ) : (
-                <p className="text-gray-900">{profile?.email || 'Not provided'}</p>
-              )}
+                <p className="text-gray-900">{profile.user.email || 'Not provided'}</p>
             </div>
             <div>
+              {/* ye changeable hai */}
               <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
               {isEditing ? (
                 <input
@@ -597,14 +592,14 @@ const ProfilePage = ({ onBack, profile, loading, error }) => {
                 <FileText className="h-8 w-8 text-gray-400 mr-3" />
                 <div>
                   <p className="font-medium text-gray-900">
-                    {profile?.resumeUrl ? 'Resume uploaded' : 'No resume uploaded'}
+                    {profile.resume ? 'Resume uploaded' : 'No resume uploaded'}
                   </p>
                   <p className="text-sm text-gray-600">PDF format</p>
                 </div>
               </div>
-              {profile?.resumeUrl && (
+              {profile?.resume && (
                 <a
-                  href={profile.resumeUrl}
+                  href={profile.resume}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center px-3 py-2 text-blue-600 hover:bg-blue-50 rounded-lg"

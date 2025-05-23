@@ -69,8 +69,14 @@ const JobSeekerDashboard = () => {
   useEffect(() => {
     if (token) {
       dispatch(getAllJobs());
+      console.log("JOBS FOR THIS PERSON " , jobs);
+      
       dispatch(getMyApplications());
+      console.log("Applications" , applications);
+      
       dispatch(getJobSeekerProfile());
+      console.log("THIS GUYS PROFILE " ,jobSeekerProfile);
+      
     }
   }, [dispatch, token]);
 
