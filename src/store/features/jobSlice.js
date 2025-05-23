@@ -1,16 +1,9 @@
-// src/store/features/jobSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  selectedJob: null,
-  searchFilters: {
-    keyword: '',
-    location: '',
-    jobType: '',
-    salaryRange: '',
-    company: '',
-  },
-  searchResults: [],
+  jobs: [],
+  currentJob: null,
+  myJobs: [],
   loading: false,
   error: null,
 };
@@ -19,76 +12,79 @@ const jobSlice = createSlice({
   name: 'jobs',
   initialState,
   reducers: {
-    // Set selected job
-    setSelectedJob: (state, action) => {
-      state.selectedJob = action.payload;
-    },
-    
-    // Clear selected job
-    clearSelectedJob: (state) => {
-      state.selectedJob = null;
-    },
-    
-    // Set search filters
-    setSearchFilters: (state, action) => {
-      state.searchFilters = { ...state.searchFilters, ...action.payload };
-    },
-    
-    // Clear search filters
-    clearSearchFilters: (state) => {
-      state.searchFilters = {
-        keyword: '',
-        location: '',
-        jobType: '',
-        salaryRange: '',
-        company: '',
-      };
-    },
-    
-    // Set search results
-    setSearchResults: (state, action) => {
-      state.searchResults = action.payload;
-    },
-    
-    // Clear search results
-    clearSearchResults: (state) => {
-      state.searchResults = [];
-    },
-    
-    // Set loading state
-    setLoading: (state, action) => {
+    // Loading states
+    setJobsLoading: (state, action) => {
       state.loading = action.payload;
     },
     
-    // Set error
-    setError: (state, action) => {
+    // Get all jobs
+    getAllJobsSuccess: (state, action) => {
+      state.jobs = action.payload;
+      state.loading = false;
+      state.error = null;
+    },
+    
+    // Get job details
+    getJobDetailsSuccess: (state, action) => {
+      state.currentJob = action.payload;
+      state.loading = false;
+      state.error = null;
+    },
+    
+    // Get recruiter's jobs
+    getMyJobsSuccess: (state, action) => {
+      state.myJobs = action.payload;
+      state.loading = false;
+      state.error = null;
+    },
+    
+    // Create job
+    createJobSuccess: (state, action) => {
+      state.myJobs.push(action.payload);
+      state.loading = false;
+      state.error = null;
+    },
+    
+    // Update job
+    updateJobSuccess: (state, action) => {
+      const index = state.myJobs.findIndex(job => job._id === action.payload._id);
+      if (index !== -1) {
+        state.myJobs[index] = action.payload;
+      }
+      state.loading = false;
+      state.error = null;
+    },
+    
+    // Delete job
+    deleteJobSuccess: (state, action) => {
+      state.myJobs = state.myJobs.filter(job => job._id !== action.payload);
+      state.loading = false;
+      state.error = null;
+    },
+    
+    // Job operation failure
+    jobFailure: (state, action) => {
+      state.loading = false;
       state.error = action.payload;
     },
     
     // Clear error
-    clearError: (state) => {
+    clearJobError: (state) => {
       state.error = null;
     },
   },
 });
 
 export const {
-  setSelectedJob,
-  clearSelectedJob,
-  setSearchFilters,
-  clearSearchFilters,
-  setSearchResults,
-  clearSearchResults,
-  setLoading,
-  setError,
-  clearError,
+  setJobsLoading,
+  getAllJobsSuccess,
+  getJobDetailsSuccess,
+  getMyJobsSuccess,
+  createJobSuccess,
+  updateJobSuccess,
+  deleteJobSuccess,
+  jobFailure,
+  clearJobError,
 } = jobSlice.actions;
-
-// Selectors
-export const selectSelectedJob = (state) => state.jobs.selectedJob;
-export const selectSearchFilters = (state) => state.jobs.searchFilters;
-export const selectSearchResults = (state) => state.jobs.searchResults;
-export const selectJobsLoading = (state) => state.jobs.loading;
-export const selectJobsError = (state) => state.jobs.error;
 
 export default jobSlice.reducer;

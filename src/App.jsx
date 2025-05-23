@@ -2,7 +2,12 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { useDispatch , useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { loginSuccess } from './store/features/authSlice';
+
 import { CircularProgress, Box } from '@mui/material';
+import JobSeekerDashboard from './components/dashboard/JobSeekerBoard';
 
 // Components
 import LandingPage from './components/LandingPage';
@@ -32,25 +37,66 @@ const LoadingScreen = () => (
 );
 
 function App() {
+    const dispatch = useDispatch();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    // Check if user is already logged in
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (token && userData) {
+      dispatch(loginSuccess({
+        user: JSON.parse(userData),
+        token: token
+      }));
+    }
+  }, []);
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <div className="min-h-screen bg-slate-50">
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route
-            path="/dashboard"
+          <Route 
+            path="/login" 
             element={
-              <ProtectedRoute>
-                <div className="p-8">
-                  <h1>Dashboard - Protected Route Working!</h1>
-                  <p>You are successfully authenticated.</p>
-                </div>
+              isAuthenticated ? (
+                <Navigate to={user?.role === 'jobseeker' ? '/dashboard/jobseeker' : '/dashboard/recruiter'} />
+              ) : (
+                 <LoginPage />
+              )
+              
+            } 
+          />
+          <Route 
+            path="/signup" 
+            element={
+              // isAuthenticated ? (
+              //   <Navigate to={user?.role === 'jobseeker' ? '/dashboard/jobseeker' : '/dashboard/recruiter'} />
+              // ) : (
+                
+              // )
+              <SignupPage />
+            } 
+          />
+          <Route
+            path="/dashboard/jobseeker"
+            element={
+              <ProtectedRoute allowedRoles={['jobseeker']}>
+                <JobSeekerDashboard />
               </ProtectedRoute>
             }
           />
+          {/* <Route
+            path="/dashboard/recruiter"
+            element={
+              <ProtectedRoute allowedRoles={['recruiter']}>
+                <RecruiterDashboard />
+              </ProtectedRoute>
+            }
+          /> */}
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

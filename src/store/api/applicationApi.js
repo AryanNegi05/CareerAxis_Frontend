@@ -1,95 +1,112 @@
-// src/store/api/applicationApi.js
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import apiCall from '../../utils/api';
+import {
+  setApplicationsLoading,
+  applyJobSuccess,
+  getMyApplicationsSuccess,
+  getJobApplicationsSuccess,
+  acceptApplicationSuccess,
+  rejectApplicationSuccess,
+  withdrawApplicationSuccess,
+  applicationFailure,
+  clearApplicationError,
+} from '../features/applicationSlice';
 
-const baseQuery = fetchBaseQuery({
-  baseUrl: '/api/applications',
-  credentials: 'include',
-  prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth.token;
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
+// Apply for job
+export const applyForJob = (jobId, applicationData) => async (dispatch) => {
+  try {
+    dispatch(setApplicationsLoading(true));
+   
+    const data = await apiCall(`/applications/apply/${jobId}`, {
+      method: 'POST',
+      body: JSON.stringify(applicationData),
+    });
+    
+    dispatch(applyJobSuccess(data.application));
+    
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
 
-export const applicationApi = createApi({
-  reducerPath: 'applicationApi',
-  baseQuery,
-  tagTypes: ['Application'],
-  endpoints: (builder) => ({
-    // Apply for job
-    applyForJob: builder.mutation({
-      query: ({ jobId, ...applicationData }) => ({
-        url: `/apply/${jobId}`,
-        method: 'POST',
-        body: applicationData,
-      }),
-      invalidatesTags: ['Application'],
-    }),
+// Get my applications (job seeker)
+export const getMyApplications = () => async (dispatch,getState) => {
+  try {
+    dispatch(setApplicationsLoading(true));
+    const { auth } = getState();
+    const token = auth.token;
+    console.log(token);
+    const data = await apiCall('/application/applied' , token);
+    console.log(data);
+    dispatch(getMyApplicationsSuccess(data.applications));
+    
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
 
-    // Withdraw application
-    withdrawApplication: builder.mutation({
-      query: (appId) => ({
-        url: `/withdraw/${appId}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Application'],
-    }),
+// Get applications for a job (recruiter)
+export const getJobApplications = (jobId) => async (dispatch) => {
+  try {
+    dispatch(setApplicationsLoading(true));
+    
+    const data = await apiCall(`/applications/applications/${jobId}`);
+    
+    dispatch(getJobApplicationsSuccess(data.applications));
+    
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
 
-    // Accept application (recruiter)
-    acceptApplication: builder.mutation({
-      query: (appId) => ({
-        url: `/accept/${appId}`,
-        method: 'PATCH',
-      }),
-      invalidatesTags: ['Application'],
-    }),
+// Accept application
+export const acceptApplication = (appId) => async (dispatch) => {
+  try {
+    dispatch(setApplicationsLoading(true));
+    
+    const data = await apiCall(`/applications/accept/${appId}`, {
+      method: 'PUT',
+    });
+    
+    dispatch(acceptApplicationSuccess(data.application));
+    
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
 
-    // Reject application (recruiter)
-    rejectApplication: builder.mutation({
-      query: (appId) => ({
-        url: `/reject/${appId}`,
-        method: 'PATCH',
-      }),
-      invalidatesTags: ['Application'],
-    }),
+// Reject application
+export const rejectApplication = (appId) => async (dispatch) => {
+  try {
+    dispatch(setApplicationsLoading(true));
+    
+    const data = await apiCall(`/applications/reject/${appId}`, {
+      method: 'PUT',
+    });
+    
+    dispatch(rejectApplicationSuccess(data.application));
+    
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
 
-    // Get applications for a job (recruiter)
-    getApplicationsForJob: builder.query({
-      query: (jobId) => `/job/${jobId}`,
-      providesTags: (result, error, jobId) => [
-        { type: 'Application', id: `job-${jobId}` },
-      ],
-    }),
+// Withdraw application
+export const withdrawApplication = (appId) => async (dispatch) => {
+  try {
+    dispatch(setApplicationsLoading(true));
+    
+    await apiCall(`/applications/withdraw/${appId}`, {
+      method: 'DELETE',
+    });
+    
+    dispatch(withdrawApplicationSuccess(appId));
+    
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
 
-    // Get user's applied applications (job seeker)
-    getAppliedApplications: builder.query({
-      query: () => '/my-applications',
-      providesTags: ['Application'],
-    }),
-
-    // Get application by ID
-    getApplicationById: builder.query({
-      query: (appId) => `/${appId}`,
-      providesTags: (result, error, appId) => [{ type: 'Application', id: appId }],
-    }),
-
-    // Get all applications (recruiter - for their jobs)
-    getAllApplicationsForRecruiter: builder.query({
-      query: () => '/recruiter/all',
-      providesTags: ['Application'],
-    }),
-  }),
-});
-
-export const {
-  useApplyForJobMutation,
-  useWithdrawApplicationMutation,
-  useAcceptApplicationMutation,
-  useRejectApplicationMutation,
-  useGetApplicationsForJobQuery,
-  useGetAppliedApplicationsQuery,
-  useGetApplicationByIdQuery,
-  useGetAllApplicationsForRecruiterQuery,
-} = applicationApi;
+// Clear application errors
+export const clearApplicationErrors = () => (dispatch) => {
+  dispatch(clearApplicationError());
+};

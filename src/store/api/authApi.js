@@ -1,72 +1,74 @@
-// src/store/api/authApi.js
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+// store/actions/authActions.js
+import apiCall from '../../utils/api';
+import {
+  setLoading,
+  loginSuccess,
+  authFailure,
+  logout as logoutAction,
+  clearError,
+} from '../features/authSlice';
 
-const baseQuery = fetchBaseQuery({
-  baseUrl: 'http://localhost:4000/api/v1/auth',
-  credentials: 'include', // Include cookies
-  prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth.token;
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
+// Login action
+export const login = (credentials) => async (dispatch) => {
+  try {
+    console.log(credentials);
+    
+    dispatch(setLoading(true));
+    
+    const data = await apiCall('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    } );
 
-export const authApi = createApi({
-  reducerPath: 'authApi',
-  baseQuery,
-  tagTypes: ['Auth'],
-  endpoints: (builder) => ({
-    // Sign up
-    signup: builder.mutation({
-      query: (userData) => ({
-        url: '/signup',
-        method: 'POST',
-        body: userData,
-      }),
-      invalidatesTags: ['Auth'],
-    }),
+    // Store token in localStorage
+    console.log(data);
+    
+    localStorage.setItem('token', data.token);
+    
+    dispatch(loginSuccess({
+      user: data.user,
+      token: data.token,
+    }));
 
-    // Login
-    login: builder.mutation({
-      query: (credentials) => ({
-        url: '/login',
-        method: 'POST',
-        body: credentials,
-      }),
-      invalidatesTags: ['Auth'],
-    }),
+    return data;
 
-    // Logout
-    logout: builder.mutation({
-      query: () => ({
-        url: '/logout',
-        method: 'POST',
-      }),
-      invalidatesTags: ['Auth'],
-    }),
+  } catch (error) {
+    dispatch(authFailure(error.message));
+  }
+};
 
-    // Get current user
-    getCurrentUser: builder.query({
-      query: () => '/me',
-      providesTags: ['Auth'],
-    }),
+// Signup action
+export const signup = (userData) => async (dispatch) => {
+  try {
+    dispatch(setLoading(true));
+    
+    const data = await apiCall('/auth/signup', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    });
 
-    // Refresh token
-    refreshToken: builder.mutation({
-      query: () => ({
-        url: '/refresh',
-        method: 'POST',
-      }),
-    }),
-  }),
-});
+    // Store token in localStorage
+    localStorage.setItem('token', data.token);
 
-export const {
-  useSignupMutation,
-  useLoginMutation,
-  useLogoutMutation,
-  useGetCurrentUserQuery,
-  useRefreshTokenMutation,
-} = authApi;
+    dispatch(loginSuccess({
+      user: data.user,
+      token: data.token,
+    }));
+
+    return data;
+
+  } catch (error) {
+    dispatch(authFailure(error.message));
+  }
+};
+
+// Logout action
+export const logout = () => (dispatch) => {
+  localStorage.removeItem('token');
+  dispatch(logoutAction());
+};
+
+// Clear auth error
+export const clearAuthError = () => (dispatch) => {
+  dispatch(clearError());
+};

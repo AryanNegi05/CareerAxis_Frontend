@@ -1,102 +1,92 @@
-// src/store/api/profileApi.js
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import apiCall from '../../utils/api';
+import {
+  setProfileLoading,
+  getJobSeekerProfileSuccess,
+  updateJobSeekerProfileSuccess,
+  getRecruiterProfileSuccess,
+  updateRecruiterProfileSuccess,
+  profileFailure,
+  clearProfileError,
+} from '../features/profileSlice';
 
-const baseQuery = fetchBaseQuery({
-  baseUrl: '/api/profile',
-  credentials: 'include',
-  prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth.token;
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
+// Get job seeker profile
+export const getJobSeekerProfile = () => async (dispatch,getState) => {
+  try {
+    dispatch(setProfileLoading(true));
+    const {auth} = getState();
+    const token = auth.token;
+    console.log(token);
+    const data = await apiCall('/profile/jobseeker/MyProfile',token);
+    console.log(data);
+    
+    dispatch(getJobSeekerProfileSuccess(data.profile));
+    
+  } catch (error) {
+    dispatch(profileFailure(error.message));
+  }
+};
 
-export const profileApi = createApi({
-  reducerPath: 'profileApi',
-  baseQuery,
-  tagTypes: ['Profile'],
-  endpoints: (builder) => ({
-    // Get job seeker profile
-    getJobSeekerProfile: builder.query({
-      query: () => '/jobseeker',
-      providesTags: ['Profile'],
-    }),
+// Update job seeker profile
+export const updateJobSeekerProfile = (profileData) => async (dispatch) => {
+  try {
+    dispatch(setProfileLoading(true));
+    
+    // Create FormData for file upload
+    const formData = new FormData();
+    
+    Object.keys(profileData).forEach(key => {
+      if (key === 'skills' || key === 'experience' || key === 'education') {
+        formData.append(key, JSON.stringify(profileData[key]));
+      } else {
+        formData.append(key, profileData[key]);
+      }
+    });
+    
+    const data = await apiCall('/profile/jobseeker/updateProfile', {
+      method: 'POST',
+      headers: {}, // Let browser set Content-Type for FormData
+      body: formData,
+    });
+    
+    dispatch(updateJobSeekerProfileSuccess(data.profile));
+    
+  } catch (error) {
+    dispatch(profileFailure(error.message));
+  }
+};
 
-    // Create or update job seeker profile
-    createOrUpdateJobSeekerProfile: builder.mutation({
-      query: (profileData) => {
-        const formData = new FormData();
-        
-        // Append file if exists
-        if (profileData.resume) {
-          formData.append('resume', profileData.resume);
-        }
-        
-        // Append other data as JSON strings
-        if (profileData.skills) {
-          formData.append('skills', JSON.stringify(profileData.skills));
-        }
-        if (profileData.experience) {
-          formData.append('experience', JSON.stringify(profileData.experience));
-        }
-        if (profileData.education) {
-          formData.append('education', JSON.stringify(profileData.education));
-        }
+// Get recruiter profile
+export const getRecruiterProfile = () => async (dispatch) => {
+  try {
+    dispatch(setProfileLoading(true));
+    
+    const data = await apiCall('/profile/recruiter/myProfile');
+    
+    dispatch(getRecruiterProfileSuccess(data.profile));
+    
+  } catch (error) {
+    dispatch(profileFailure(error.message));
+  }
+};
 
-        return {
-          url: '/jobseeker',
-          method: 'POST',
-          body: formData,
-        };
-      },
-      invalidatesTags: ['Profile'],
-    }),
+// Update recruiter profile
+export const updateRecruiterProfile = (profileData) => async (dispatch) => {
+  try {
+    dispatch(setProfileLoading(true));
+    
+    const data = await apiCall('/profile/recruiter/updateProfile', {
+      method: 'POST',
+      body: JSON.stringify(profileData),
+    });
+    
+    dispatch(updateRecruiterProfileSuccess(data.profile));
+    
+  } catch (error) {
+    dispatch(profileFailure(error.message));
+  }
+};
 
-    // Get recruiter profile
-    getRecruiterProfile: builder.query({
-      query: () => '/recruiter',
-      providesTags: ['Profile'],
-    }),
-
-    // Create or update recruiter profile
-    createOrUpdateRecruiterProfile: builder.mutation({
-      query: (profileData) => ({
-        url: '/recruiter',
-        method: 'POST',
-        body: profileData,
-      }),
-      invalidatesTags: ['Profile'],
-    }),
-
-    // Get profile by user ID (public view)
-    getProfileByUserId: builder.query({
-      query: (userId) => `/user/${userId}`,
-      providesTags: (result, error, userId) => [{ type: 'Profile', id: userId }],
-    }),
-
-    // Upload resume
-    uploadResume: builder.mutation({
-      query: (file) => {
-        const formData = new FormData();
-        formData.append('resume', file);
-        return {
-          url: '/upload-resume',
-          method: 'POST',
-          body: formData,
-        };
-      },
-      invalidatesTags: ['Profile'],
-    }),
-  }),
-});
-
-export const {
-  useGetJobSeekerProfileQuery,
-  useCreateOrUpdateJobSeekerProfileMutation,
-  useGetRecruiterProfileQuery,
-  useCreateOrUpdateRecruiterProfileMutation,
-  useGetProfileByUserIdQuery,
-  useUploadResumeMutation,
-} = profileApi;
+// Clear profile errors
+export const clearProfileErrors = () => (dispatch) => {
+  dispatch(clearProfileError());
+};

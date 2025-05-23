@@ -1,90 +1,109 @@
-// src/store/api/jobApi.js
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import apiCall from '../../utils/api';
+import {
+  setJobsLoading,
+  getAllJobsSuccess,
+  getJobDetailsSuccess,
+  getMyJobsSuccess,
+  createJobSuccess,
+  updateJobSuccess,
+  deleteJobSuccess,
+  jobFailure,
+  clearJobError,
+} from '../features/jobSlice';
 
-const baseQuery = fetchBaseQuery({
-  baseUrl: '/api/jobs',
-  credentials: 'include',
-  prepareHeaders: (headers, { getState }) => {
-    const token = getState().auth.token;
-    if (token) {
-      headers.set('authorization', `Bearer ${token}`);
-    }
-    return headers;
-  },
-});
+// Get all jobs
+export const getAllJobs = () => async (dispatch) => {
+  try {
+    dispatch(setJobsLoading(true));
+    const data = await apiCall('/jobs/AllJobs');
+    console.log(data);
+    dispatch(getAllJobsSuccess(data.data));
+    
+  } catch (error) {
+    dispatch(jobFailure(error.message));
+  }
+};
 
-export const jobApi = createApi({
-  reducerPath: 'jobApi',
-  baseQuery,
-  tagTypes: ['Job'],
-  endpoints: (builder) => ({
-    // Get all jobs
-    getAllJobs: builder.query({
-      query: (params = {}) => {
-        const searchParams = new URLSearchParams(params).toString();
-        return searchParams ? `/?${searchParams}` : '/';
-      },
-      providesTags: ['Job'],
-    }),
+// Get job details
+export const getJobDetails = (jobId) => async (dispatch) => {
+  try {
+    dispatch(setJobsLoading(true));
+    
+    const data = await apiCall(`/jobs/${jobId}`);
+    
+    dispatch(getJobDetailsSuccess(data.job));
+    
+  } catch (error) {
+    dispatch(jobFailure(error.message));
+  }
+};
 
-    // Get job by ID
-    getJobById: builder.query({
-      query: (id) => `/${id}`,
-      providesTags: (result, error, id) => [{ type: 'Job', id }],
-    }),
+// Get recruiter's jobs
+export const getMyJobs = () => async (dispatch) => {
+  try {
+    dispatch(setJobsLoading(true));
+    
+    const data = await apiCall('/jobs/my-jobs');
+    
+    dispatch(getMyJobsSuccess(data.jobs));
+    
+  } catch (error) {
+    dispatch(jobFailure(error.message));
+  }
+};
 
-    // Get jobs by recruiter
-    getJobsByRecruiter: builder.query({
-      query: () => '/recruiter/my-jobs',
-      providesTags: ['Job'],
-    }),
+// Create job
+export const createJob = (jobData) => async (dispatch) => {
+  try {
+    dispatch(setJobsLoading(true));
+    
+    const data = await apiCall('/jobs', {
+      method: 'POST',
+      body: JSON.stringify(jobData),
+    });
+    
+    dispatch(createJobSuccess(data.job));
+    
+  } catch (error) {
+    dispatch(jobFailure(error.message));
+  }
+};
 
-    // Create job (recruiter only)
-    createJob: builder.mutation({
-      query: (jobData) => ({
-        url: '/',
-        method: 'POST',
-        body: jobData,
-      }),
-      invalidatesTags: ['Job'],
-    }),
+// Update job
+export const updateJob = (jobId, jobData) => async (dispatch) => {
+  try {
+    dispatch(setJobsLoading(true));
+    
+    const data = await apiCall(`/jobs/${jobId}`, {
+      method: 'PUT',
+      body: JSON.stringify(jobData),
+    });
+    
+    dispatch(updateJobSuccess(data.job));
+    
+  } catch (error) {
+    dispatch(jobFailure(error.message));
+  }
+};
 
-    // Update job
-    updateJob: builder.mutation({
-      query: ({ id, ...jobData }) => ({
-        url: `/${id}`,
-        method: 'PUT',
-        body: jobData,
-      }),
-      invalidatesTags: (result, error, { id }) => [{ type: 'Job', id }, 'Job'],
-    }),
+// Delete job
+export const deleteJob = (jobId) => async (dispatch) => {
+  try {
+    dispatch(setJobsLoading(true));
+    
+    await apiCall(`/jobs/${jobId}`, {
+      method: 'DELETE',
+    });
+    
+    dispatch(deleteJobSuccess(jobId));
+    
+  } catch (error) {
+    dispatch(jobFailure(error.message));
+  }
+};
 
-    // Delete job
-    deleteJob: builder.mutation({
-      query: (id) => ({
-        url: `/${id}`,
-        method: 'DELETE',
-      }),
-      invalidatesTags: ['Job'],
-    }),
+// Clear job errors
+export const clearJobErrors = () => (dispatch) => {
+  dispatch(clearJobError());
+};
 
-    // Search jobs
-    searchJobs: builder.query({
-      query: (searchParams) => {
-        const params = new URLSearchParams(searchParams).toString();
-        return `/search?${params}`;
-      },
-      providesTags: ['Job'],
-    }),
-  }),
-});
-
-export const {
-  useGetAllJobsQuery,
-  useGetJobByIdQuery,
-  useGetJobsByRecruiterQuery,
-  useCreateJobMutation,
-  useUpdateJobMutation,
-  useDeleteJobMutation,
-  useSearchJobsQuery,
-} = jobApi;
