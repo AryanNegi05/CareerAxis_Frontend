@@ -8,23 +8,19 @@ import {
   clearError,
 } from '../features/authSlice';
 
-// Login action
+// Login action (no token required)
 export const login = (credentials) => async (dispatch) => {
   try {
-    console.log(credentials);
-    
     dispatch(setLoading(true));
-    
+
     const data = await apiCall('/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
-    } );
+    });
 
     // Store token in localStorage
-    console.log(data);
-    
     localStorage.setItem('token', data.token);
-    
+
     dispatch(loginSuccess({
       user: data.user,
       token: data.token,
@@ -37,11 +33,11 @@ export const login = (credentials) => async (dispatch) => {
   }
 };
 
-// Signup action
+// Signup action (no token required)
 export const signup = (userData) => async (dispatch) => {
   try {
     dispatch(setLoading(true));
-    
+
     const data = await apiCall('/auth/signup', {
       method: 'POST',
       body: JSON.stringify(userData),
@@ -62,7 +58,7 @@ export const signup = (userData) => async (dispatch) => {
   }
 };
 
-// Logout action
+// Logout action (clear local storage + Redux)
 export const logout = () => (dispatch) => {
   localStorage.removeItem('token');
   dispatch(logoutAction());

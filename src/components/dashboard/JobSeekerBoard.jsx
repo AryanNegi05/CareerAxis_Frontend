@@ -1,50 +1,140 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
-  User, 
   Briefcase, 
   FileText, 
   Search, 
-  Clock, 
-  CheckCircle, 
-  XCircle,
-  Eye,
   Filter,
+  TrendingUp,
+  Star,
+  BarChart3,
+  Users,
+  User,
   Calendar,
   MapPin,
-  DollarSign
+  DollarSign,
+  Clock,
+  Plus,
+  X,
+  Upload,
+  Download,
+  Eye,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Settings,
+  Bell,
+  LogOut
 } from 'lucide-react';
-import { getAllJobs } from '../../store/api/jobApi';
-import { getMyApplications } from '../../store/api/applicationApi'
-import { getJobSeekerProfile } from '../../store/api/profileApi';
+
+// Import Redux actions
+import { getAllJobs, clearJobErrors } from '../../store/api/jobApi';
+import { getMyApplications, applyForJob, clearApplicationErrors } from '../../store/api/applicationApi';
+import { getJobSeekerProfile, clearProfileErrors } from '../../store/api/profileApi';
+import { logout } from '../../store/api/authApi';
+
+// Import components
+import DashboardHeader from './DashBoardHeader';
+import StatsCards from '../dashboard/StatsCard';
+import JobCard from '../jobs/JobsCard';
+import ApplicationModal from '../applications/ApplicationModal';
+import ProfilePage from '../profile/JobSeekerProfilePage';
+import RecentActivity from './RecentActivity';
+import ProfileCompletion from '../profile/ProfileCompletion';
+import JobRecommendations from '../jobs/JobRecommendation';
+import ApplicationCard from '../applications/ApplicationCard';
 
 const JobSeekerDashboard = () => {
-const dispatch = useDispatch();
-const { user ,token} = useSelector(state => state.auth);
-const { jobs, loading: jobsLoading } = useSelector(state => state.jobs);
-const { applications, loading: applicationsLoading } = useSelector(state => state.applications);
+  const dispatch = useDispatch();
+  
+  // Redux state selectors
+  const { user, token } = useSelector(state => state.auth);
+  const { jobs, loading: jobsLoading, error: jobsError } = useSelector(state => state.jobs);
+  const { applications, loading: applicationsLoading, error: applicationsError } = useSelector(state => state.applications);
+  const { jobSeekerProfile, loading: profileLoading, error: profileError } = useSelector(state => state.profile);
 
-  const { jobSeekerProfile } = useSelector(state => state.profile);
-
+  // Local state
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [jobTypeFilter, setJobTypeFilter] = useState('');
+  const [salaryFilter, setSalaryFilter] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [showProfile, setShowProfile] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [applicationData, setApplicationData] = useState({ coverLetter: '' });
 
+  // Load initial data
   useEffect(() => {
-    dispatch(getAllJobs());
-    dispatch(getMyApplications());
-    dispatch(getJobSeekerProfile());
+    if (token) {
+      dispatch(getAllJobs());
+      dispatch(getMyApplications());
+      dispatch(getJobSeekerProfile());
+    }
+  }, [dispatch, token]);
+
+  // Clear errors on component mount
+  useEffect(() => {
+    dispatch(clearJobErrors());
+    dispatch(clearApplicationErrors());
+    dispatch(clearProfileErrors());
   }, [dispatch]);
 
+  // Filter and sort jobs
   const filteredJobs = jobs?.filter(job => {
     const matchesSearch = job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company?.toLowerCase().includes(searchTerm.toLowerCase());
+                         job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         job.description?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLocation = !locationFilter || job.location?.toLowerCase().includes(locationFilter.toLowerCase());
     const matchesType = !jobTypeFilter || job.jobType === jobTypeFilter;
-    return matchesSearch && matchesLocation && matchesType;
+    const matchesSalary = !salaryFilter || (job.salary && checkSalaryRange(job.salary, salaryFilter));
+    return matchesSearch && matchesLocation && matchesType && matchesSalary;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      case 'oldest':
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      case 'salary-high':
+        return (b.salary || 0) - (a.salary || 0);
+      case 'salary-low':
+        return (a.salary || 0) - (b.salary || 0);
+      default:
+        return 0;
+    }
   }) || [];
 
+  const checkSalaryRange = (salary, range) => {
+    const numSalary = typeof salary === 'number' ? salary : parseInt(salary.toString().replace(/\D/g, ''));
+    switch (range) {
+      case '0-50k': return numSalary <= 50000;
+      case '50k-100k': return numSalary > 50000 && numSalary <= 100000;
+      case '100k+': return numSalary > 100000;
+      default: return true;
+    }
+  };
+
+  // Handle job application
+  const handleJobApply = async (jobId, applicationData) => {
+    try {
+      await dispatch(applyForJob(jobId, applicationData));
+      setShowApplicationModal(false);
+      setSelectedJob(null);
+      setApplicationData({ coverLetter: '' });
+      // Refresh applications after successful application
+      dispatch(getMyApplications());
+    } catch (error) {
+      console.error('Application failed:', error);
+    }
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
+  // Utility functions
   const getApplicationStatusColor = (status) => {
     switch (status) {
       case 'accepted': return 'text-green-600 bg-green-100';
@@ -54,255 +144,260 @@ const { applications, loading: applicationsLoading } = useSelector(state => stat
     }
   };
 
-  const ApplicationStats = () => {
-    const stats = applications?.reduce((acc, app) => {
-      acc[app.status] = (acc[app.status] || 0) + 1;
-      return acc;
-    }, {}) || {};
-
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <FileText className="h-8 w-8 text-blue-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Applications</p>
-              <p className="text-2xl font-bold text-gray-900">{applications?.length || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.pending || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Accepted</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.accepted || 0}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center">
-            <XCircle className="h-8 w-8 text-red-600" />
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Rejected</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.rejected || 0}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  const getApplicationStatusIcon = (status) => {
+    switch (status) {
+      case 'accepted': return CheckCircle;
+      case 'rejected': return XCircle;
+      case 'pending': return AlertCircle;
+      default: return Clock;
+    }
   };
 
-  const JobCard = ({ job }) => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-          <p className="text-gray-600">{job.company}</p>
-        </div>
-        <button className="text-blue-600 hover:text-blue-800">
-          <Eye className="h-5 w-5" />
-        </button>
-      </div>
-      <div className="flex items-center text-sm text-gray-500 mb-3">
-        <MapPin className="h-4 w-4 mr-1" />
-        <span className="mr-4">{job.location}</span>
-        <DollarSign className="h-4 w-4 mr-1" />
-        <span className="mr-4">{job.salary}</span>
-        <Calendar className="h-4 w-4 mr-1" />
-        <span>{new Date(job.createdAt).toLocaleDateString()}</span>
-      </div>
-      <p className="text-gray-700 mb-4 line-clamp-2">{job.description}</p>
-      <div className="flex justify-between items-center">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          {job.jobType}
-        </span>
-        <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm">
-          Apply Now
-        </button>
-      </div>
-    </div>
-  );
-
-  const ApplicationCard = ({ application }) => (
-    <div className="bg-white p-6 rounded-lg shadow-sm border">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">{application.job?.title}</h3>
-          <p className="text-gray-600">{application.job?.company}</p>
-        </div>
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getApplicationStatusColor(application.status)}`}>
-          {application.status}
-        </span>
-      </div>
-      <div className="flex items-center text-sm text-gray-500 mb-3">
-        <Calendar className="h-4 w-4 mr-1" />
-        <span>Applied on {new Date(application.appliedAt).toLocaleDateString()}</span>
-      </div>
-      {application.coverLetter && (
-        <p className="text-gray-700 mb-3 text-sm">{application.coverLetter.substring(0, 100)}...</p>
-      )}
-    </div>
-  );
+  // Show profile page if requested
+  if (showProfile) {
+    return (
+      <ProfilePage 
+        onBack={() => setShowProfile(false)}
+        profile={jobSeekerProfile}
+        loading={profileLoading}
+        error={profileError}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back, {user?.name}!</h1>
-              <p className="text-gray-600">Manage your job search and applications</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">
-                <User className="h-4 w-4 mr-2 inline" />
-                Edit Profile
+      <DashboardHeader 
+        user={user}
+        onProfileClick={() => setShowProfile(true)}
+        onLogout={handleLogout}
+      />
+      
+      {/* Navigation Tabs */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6">
+          <nav className="flex space-x-8">
+            {[
+              { id: 'overview', name: 'Overview', icon: BarChart3 },
+              { id: 'jobs', name: 'Browse Jobs', icon: Briefcase },
+              { id: 'applications', name: 'My Applications', icon: FileText },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-3 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <tab.icon className="h-4 w-4 mr-2" />
+                {tab.name}
               </button>
-            </div>
-          </div>
+            ))}
+          </nav>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Tabs */}
-        <div className="mb-8">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8">
-              {[
-                { id: 'overview', name: 'Overview', icon: Briefcase },
-                { id: 'jobs', name: 'Browse Jobs', icon: Search },
-                { id: 'applications', name: 'My Applications', icon: FileText }
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center py-2 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <tab.icon className="h-4 w-4 mr-2" />
-                  {tab.name}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
-
+      <div className="max-w-7xl mx-auto p-6">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div>
-            <ApplicationStats />
-            
-            {/* Profile Completion */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Profile Completion</h2>
-              <div className="flex items-center">
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: '75%' }}></div>
-                </div>
-                <span className="ml-4 text-sm font-medium text-gray-700">75%</span>
+          <>
+            <StatsCards 
+              applications={applications}
+              profile={jobSeekerProfile}
+            />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <RecentActivity 
+                  applications={applications}
+                  getApplicationStatusColor={getApplicationStatusColor}
+                  getApplicationStatusIcon={getApplicationStatusIcon}
+                />
+                <JobRecommendations 
+                  jobs={jobs}
+                  profile={jobSeekerProfile}
+                />
               </div>
-              <p className="text-sm text-gray-600 mt-2">Complete your profile to get better job matches</p>
-            </div>
-
-            {/* Recent Applications */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Applications</h2>
-              <div className="space-y-4">
-                {applications?.slice(0, 3).map((application) => (
-                  <ApplicationCard key={application._id} application={application} />
-                ))}
+              <div className="space-y-6">
+                <ProfileCompletion 
+                  profile={jobSeekerProfile}
+                  onProfileClick={() => setShowProfile(true)}
+                />
               </div>
             </div>
-          </div>
+          </>
         )}
 
-        {/* Browse Jobs Tab */}
+        {/* Jobs Tab */}
         {activeTab === 'jobs' && (
           <div>
-            {/* Search and Filters */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="md:col-span-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <input
-                      type="text"
-                      placeholder="Search jobs or companies..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div>
+            {/* Search and Filter Section */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
                     type="text"
-                    placeholder="Location"
-                    value={locationFilter}
-                    onChange={(e) => setLocationFilter(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search jobs, companies..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <select
-                    value={jobTypeFilter}
-                    onChange={(e) => setJobTypeFilter(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="">All Types</option>
-                    <option value="full-time">Full Time</option>
-                    <option value="part-time">Part Time</option>
-                    <option value="contract">Contract</option>
-                    <option value="remote">Remote</option>
-                  </select>
-                </div>
+                
+                <select
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Locations</option>
+                  <option value="San Francisco">San Francisco</option>
+                  <option value="New York">New York</option>
+                  <option value="Austin">Austin</option>
+                  <option value="Remote">Remote</option>
+                </select>
+
+                <select
+                  value={jobTypeFilter}
+                  onChange={(e) => setJobTypeFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Types</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Remote">Remote</option>
+                </select>
+
+                <select
+                  value={salaryFilter}
+                  onChange={(e) => setSalaryFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">All Salaries</option>
+                  <option value="0-50k">$0 - $50k</option>
+                  <option value="50k-100k">$50k - $100k</option>
+                  <option value="100k+">$100k+</option>
+                </select>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <p className="text-sm text-gray-600">
+                  {filteredJobs.length} jobs found
+                </p>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-1 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="salary-high">Salary: High to Low</option>
+                  <option value="salary-low">Salary: Low to High</option>
+                </select>
               </div>
             </div>
 
             {/* Jobs Grid */}
-            {jobsLoading ? (
-              <div className="text-center py-8">Loading jobs...</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredJobs.map((job) => (
-                  <JobCard key={job._id} job={job} />
-                ))}
-              </div>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {jobsLoading ? (
+                <div className="col-span-full flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : jobsError ? (
+                <div className="col-span-full text-center py-12">
+                  <p className="text-red-600 mb-4">Error loading jobs: {jobsError}</p>
+                  <button
+                    onClick={() => dispatch(getAllJobs())}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : (
+                filteredJobs.map((job) => (
+                  <JobCard
+                    key={job._id}
+                    job={job}
+                    applications={applications}
+                    onApply={(job) => {
+                      setSelectedJob(job);
+                      setShowApplicationModal(true);
+                    }}
+                  />
+                ))
+              )}
+            </div>
           </div>
         )}
 
-        {/* My Applications Tab */}
+        {/* Applications Tab */}
         {activeTab === 'applications' && (
           <div>
-            <ApplicationStats />
-            
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">My Applications</h2>
+              <div className="text-sm text-gray-600">
+                {applications?.length || 0} total applications
+              </div>
+            </div>
+
             {applicationsLoading ? (
-              <div className="text-center py-8">Loading applications...</div>
-            ) : (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : applicationsError ? (
+              <div className="text-center py-12">
+                <p className="text-red-600 mb-4">Error loading applications: {applicationsError}</p>
+                <button
+                  onClick={() => dispatch(getMyApplications())}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : applications?.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {applications?.map((application) => (
-                  <ApplicationCard key={application._id} application={application} />
+                {applications.map((application) => (
+                  <ApplicationCard 
+                    key={application._id} 
+                    application={application}
+                    getApplicationStatusColor={getApplicationStatusColor}
+                    getApplicationStatusIcon={getApplicationStatusIcon}
+                  />
                 ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No applications yet</h3>
+                <p className="text-gray-600 mb-4">Start applying to jobs to see your applications here</p>
+                <button
+                  onClick={() => setActiveTab('jobs')}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Browse Jobs
+                </button>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Application Modal */}
+      <ApplicationModal
+        job={selectedJob}
+        isOpen={showApplicationModal}
+        onClose={() => {
+          setShowApplicationModal(false);
+          setSelectedJob(null);
+          setApplicationData({ coverLetter: '' });
+        }}
+        onSubmit={handleJobApply}
+        applicationData={applicationData}
+        setApplicationData={setApplicationData}
+        loading={applicationsLoading}
+      />
     </div>
   );
 };
