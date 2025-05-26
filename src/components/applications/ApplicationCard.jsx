@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Calendar, 
   MapPin, 
@@ -9,15 +9,21 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle 
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 const ApplicationCard = ({ 
   application, 
   getApplicationStatusColor, 
-  getApplicationStatusIcon 
+  getApplicationStatusIcon,
+  onWithdrawApplication
 }) => {
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  
   const StatusIcon = getApplicationStatusIcon(application.status);
+  
   
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -35,13 +41,37 @@ const ApplicationCard = ({
     return salary;
   };
 
+  const handleWithdrawClick = () => {
+    setShowWithdrawConfirm(true);
+  };
+
+  const handleConfirmWithdraw = async () => {
+    setIsWithdrawing(true);
+    try {
+      console.log(application._id);
+      await onWithdrawApplication(application._id);
+      setShowWithdrawConfirm(false);
+    } catch (error) {
+      console.error('Error withdrawing application:', error);
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
+  const handleCancelWithdraw = () => {
+    setShowWithdrawConfirm(false);
+  };
+
+  // Check if application can be withdrawn (only 'applied' status can be withdrawn)
+  const canWithdraw = application.status === 'applied';
+
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-shadow">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            {application.job?.title || 'Job Title Not Available'}
+            {application.jobId?.title || 'Job Title Not Available'}
           </h3>
           <div className="flex items-center text-gray-600 mb-2">
             <Building2 className="h-4 w-4 mr-1" />
@@ -133,8 +163,51 @@ const ApplicationCard = ({
               Resume
             </button>
           )}
+
+          {/* Withdraw Application Button */}
+          {canWithdraw && (
+            <button 
+              className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition-colors"
+              onClick={handleWithdrawClick}
+              disabled={isWithdrawing}
+            >
+              <Trash2 className="h-3 w-3 mr-1" />
+              {isWithdrawing ? 'Withdrawing...' : 'Withdraw'}
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Withdraw Confirmation Modal */}
+      {showWithdrawConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-mx mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Withdraw Application
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Are you sure you want to withdraw your application for "{application.jobId?.title || 'this position'}"? 
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCancelWithdraw}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                disabled={isWithdrawing}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmWithdraw}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+                disabled={isWithdrawing}
+              >
+                {isWithdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Status-specific Messages */}
       {application.status === 'accepted' && (
@@ -161,7 +234,7 @@ const ApplicationCard = ({
         </div>
       )}
       
-      {application.status === 'pending' && (
+      {application.status === 'applied' && (
         <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-center">
             <AlertCircle className="h-4 w-4 text-yellow-600 mr-2" />

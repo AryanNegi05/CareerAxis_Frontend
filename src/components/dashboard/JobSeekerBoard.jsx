@@ -29,7 +29,7 @@ import {
 
 // Import Redux actions
 import { getAllJobs, clearJobErrors } from '../../store/api/jobApi';
-import { getMyApplications, applyForJob, clearApplicationErrors } from '../../store/api/applicationApi';
+import { getMyApplications, applyForJob, clearApplicationErrors  , withdrawApplication} from '../../store/api/applicationApi';
 import { getJobSeekerProfile, clearProfileErrors } from '../../store/api/profileApi';
 import { logout } from '../../store/api/authApi';
 
@@ -50,7 +50,7 @@ const JobSeekerDashboard = () => {
   // Redux state selectors
   const { user, token } = useSelector(state => state.auth);
   const { jobs, loading: jobsLoading, error: jobsError } = useSelector(state => state.jobs);
-  const { applications, loading: applicationsLoading, error: applicationsError } = useSelector(state => state.applications);
+  const { myApplications, loading: applicationsLoading, error: applicationsError } = useSelector(state => state.applications);
   const { jobSeekerProfile, loading: profileLoading, error: profileError } = useSelector(state => state.profile);
 
   // Local state
@@ -64,6 +64,7 @@ const JobSeekerDashboard = () => {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [applicationData, setApplicationData] = useState({ coverLetter: '' });
+  
 
   // Load initial data
   useEffect(() => {
@@ -72,7 +73,7 @@ const JobSeekerDashboard = () => {
       console.log("JOBS FOR THIS PERSON " , jobs);
       
       dispatch(getMyApplications());
-      console.log("Applications" , applications);
+      console.log("Applications" , myApplications);
       
       dispatch(getJobSeekerProfile());
       console.log("THIS GUYS PROFILE " ,jobSeekerProfile);
@@ -124,7 +125,11 @@ const JobSeekerDashboard = () => {
   // Handle job application
   const handleJobApply = async (jobId, applicationData) => {
     try {
-      await dispatch(applyForJob(jobId, applicationData));
+      const ApplyForJobData = {...applicationData , 
+        resume : jobSeekerProfile.resume
+      }
+
+      await dispatch(applyForJob(jobId, ApplyForJobData));
       setShowApplicationModal(false);
       setSelectedJob(null);
       setApplicationData({ coverLetter: '' });
@@ -158,6 +163,11 @@ const JobSeekerDashboard = () => {
       default: return Clock;
     }
   };
+
+  const handleWithdrawApplication = (applicationId) => {
+    dispatch(withdrawApplication(applicationId));
+    dispatch(getMyApplications());
+  }
 
   // Show profile page if requested
   if (showProfile) {
@@ -210,13 +220,13 @@ const JobSeekerDashboard = () => {
         {activeTab === 'overview' && (
           <>
             <StatsCards 
-              applications={applications}
+              applications={myApplications}
               profile={jobSeekerProfile}
             />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-6">
                 <RecentActivity 
-                  applications={applications}
+                  applications={myApplications}
                   getApplicationStatusColor={getApplicationStatusColor}
                   getApplicationStatusIcon={getApplicationStatusIcon}
                 />
@@ -326,7 +336,7 @@ const JobSeekerDashboard = () => {
                   <JobCard
                     key={job._id}
                     job={job}
-                    applications={applications}
+                    applications={myApplications}
                     onApply={(job) => {
                       setSelectedJob(job);
                       setShowApplicationModal(true);
@@ -344,7 +354,7 @@ const JobSeekerDashboard = () => {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-900">My Applications</h2>
               <div className="text-sm text-gray-600">
-                {applications?.length || 0} total applications
+                {myApplications?.length || 0} total applications
               </div>
             </div>
 
@@ -362,15 +372,16 @@ const JobSeekerDashboard = () => {
                   Retry
                 </button>
               </div>
-            ) : applications?.length > 0 ? (
+            ) : myApplications?.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {applications.map((application) => (
+                {myApplications.map((application) => (
                   <ApplicationCard 
-                    key={application._id} 
-                    application={application}
-                    getApplicationStatusColor={getApplicationStatusColor}
-                    getApplicationStatusIcon={getApplicationStatusIcon}
-                  />
+                  key={application._id} 
+                  application={application}
+                  getApplicationStatusColor={getApplicationStatusColor}
+                  getApplicationStatusIcon={getApplicationStatusIcon}
+                  onWithdrawApplication={handleWithdrawApplication}
+                />
                 ))}
               </div>
             ) : (

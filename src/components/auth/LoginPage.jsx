@@ -32,10 +32,15 @@ const LoginPage = () => {
       if (data && data.user) {
       localStorage.setItem('user', JSON.stringify(data.user));
       navigate(
-        data.user.role === 'jobseeker'
-          ? '/jobseeker-dashboard'
-          : '/recruiter-dashboard'
-      );
+  data.user.role === 'jobseeker'
+    ? '/dashboard/jobseeker'
+    : data.user.role === 'recruiter'
+    ? '/dashboard/recruiter'
+    : data.user.role === 'admin'
+    ? '/dashboard/dashboard'
+    : '/'
+);
+
     } else {
       console.error('Login failed or no user data.');
     }

@@ -154,7 +154,7 @@ const RecentActivity = ({ applications, getApplicationStatusColor, getApplicatio
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-lg font-semibold text-gray-900">
-              {applications.filter(app => app.status === 'pending').length}
+              {applications.filter(app => app.status === 'applied').length}
             </div>
             <div className="text-xs text-gray-500">Pending</div>
           </div>

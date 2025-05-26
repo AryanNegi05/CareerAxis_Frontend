@@ -7,11 +7,14 @@ import {
   logout as logoutAction,
   clearError,
 } from '../features/authSlice';
+import { clearAllProfilesData } from '../api/profileApi';
+// import { clearAllApplicationsData } from '../api/profileApi';
 
 // Login action (no token required)
 export const login = (credentials) => async (dispatch) => {
   try {
     dispatch(setLoading(true));
+    console.log(credentials);
 
     const data = await apiCall('/auth/login', {
       method: 'POST',
@@ -30,6 +33,7 @@ export const login = (credentials) => async (dispatch) => {
 
   } catch (error) {
     dispatch(authFailure(error.message));
+    throw error;
   }
 };
 
@@ -55,13 +59,48 @@ export const signup = (userData) => async (dispatch) => {
 
   } catch (error) {
     dispatch(authFailure(error.message));
+    throw error;
   }
 };
 
-// Logout action (clear local storage + Redux)
+// Check if user is authenticated on app load
+export const checkAuth = () => (dispatch) => {
+  const token = localStorage.getItem('token');
+  
+  if (token) {
+    try {
+      // Decode token to get user info (you might want to verify token with backend)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      
+      // Check if token is expired
+      if (payload.exp * 1000 > Date.now()) {
+        // Token is valid, set user as authenticated
+        dispatch(loginSuccess({
+          user: { id: payload.userId, role: payload.role },
+          token: token,
+        }));
+      } else {
+        // Token expired, logout
+        dispatch(logout());
+      }
+    } catch (error) {
+      // Invalid token, logout
+      dispatch(logout());
+    }
+  }
+};
+
+// Logout action (clear local storage + Redux + all related data)
 export const logout = () => (dispatch) => {
   localStorage.removeItem('token');
+  
+  // Clear all related data
+  dispatch(clearAllProfilesData());
+  // dispatch(clearAllApplicationsData());
+  
+  // Clear auth state
   dispatch(logoutAction());
+  
 };
 
 // Clear auth error

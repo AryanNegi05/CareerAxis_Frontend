@@ -46,7 +46,7 @@ const SignupPage = () => {
       
       if (data && data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate(data.user.role === 'jobseeker' ? '/dashboard/jobseeker' : '/dashboard/jobseeker');
+        navigate(data.user.role === 'jobseeker' ? '/dashboard/jobseeker' : '/dashboard/recruiter');
       } else {
         console.error('Signup failed');
       }

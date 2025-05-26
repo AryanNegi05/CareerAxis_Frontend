@@ -2,7 +2,9 @@ import React from 'react';
 import { MapPin, DollarSign, Clock, Star } from 'lucide-react';
 
 const JobCard = ({ job, applications, onApply }) => {
-  const isApplied = applications?.some(app => app.job?._id === job._id || app.job?.title === job.title);
+  // console.log(job);
+  // console.log(applications)
+  const isApplied = applications?.some(app => app.jobId?._id === job._id || app.job?.title === job.title);
   
   return (
     <div className="bg-white p-6 rounded-xl shadow-sm border hover:shadow-md transition-all duration-200">

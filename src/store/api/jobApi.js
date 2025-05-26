@@ -9,6 +9,7 @@ import {
   deleteJobSuccess,
   jobFailure,
   clearJobError,
+  
 } from '../features/jobSlice';
 
 // Get all jobs (public)
@@ -38,6 +39,7 @@ export const getMyJobs = () => async (dispatch, getState) => {
   try {
     dispatch(setJobsLoading(true));
     const token = getState().auth.token;
+    console.log(token);
     const data = await apiCall('/jobs/my-jobs', {}, token);
     dispatch(getMyJobsSuccess(data.jobs));
   } catch (error) {
@@ -88,6 +90,7 @@ export const deleteJob = (jobId) => async (dispatch, getState) => {
     dispatch(jobFailure(error.message));
   }
 };
+
 
 // Clear job errors
 export const clearJobErrors = () => (dispatch) => {

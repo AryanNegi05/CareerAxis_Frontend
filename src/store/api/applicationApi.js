@@ -12,16 +12,17 @@ import {
 } from '../features/applicationSlice';
 
 // Apply for job (needs auth)
-export const applyForJob = (jobId, applicationData) => async (dispatch, getState) => {
+export const applyForJob = (jobId, ApplyForJobData) => async (dispatch, getState) => {
   try {
+    console.log(ApplyForJobData)
     dispatch(setApplicationsLoading(true));
     const token = getState().auth.token;
-
-    const data = await apiCall(`/applications/apply/${jobId}`, {
+    const data = await apiCall(`/application/apply/${jobId}`, {
       method: 'POST',
-      body: JSON.stringify(applicationData),
+      body: JSON.stringify(ApplyForJobData),
     }, token);
 
+    console.log("api response" ,data);
     dispatch(applyJobSuccess(data.application));
   } catch (error) {
     dispatch(applicationFailure(error.message));
@@ -47,8 +48,10 @@ export const getJobApplications = (jobId) => async (dispatch, getState) => {
     dispatch(setApplicationsLoading(true));
     const token = getState().auth.token;
 
-    const data = await apiCall(`/applications/applications/${jobId}`, {}, token);
+    const data = await apiCall(`/application/applications/${jobId}`, {}, token);
+   console.log(data);
     dispatch(getJobApplicationsSuccess(data.applications));
+    
   } catch (error) {
     dispatch(applicationFailure(error.message));
   }
@@ -60,7 +63,7 @@ export const acceptApplication = (appId) => async (dispatch, getState) => {
     dispatch(setApplicationsLoading(true));
     const token = getState().auth.token;
 
-    const data = await apiCall(`/applications/accept/${appId}`, {
+    const data = await apiCall(`/application/accept/${appId}`, {
       method: 'PUT',
     }, token);
 
@@ -76,7 +79,7 @@ export const rejectApplication = (appId) => async (dispatch, getState) => {
     dispatch(setApplicationsLoading(true));
     const token = getState().auth.token;
 
-    const data = await apiCall(`/applications/reject/${appId}`, {
+    const data = await apiCall(`/application/reject/${appId}`, {
       method: 'PUT',
     }, token);
 
@@ -89,10 +92,12 @@ export const rejectApplication = (appId) => async (dispatch, getState) => {
 // Withdraw application (needs auth)
 export const withdrawApplication = (appId) => async (dispatch, getState) => {
   try {
+    console.log(appId);
+    
     dispatch(setApplicationsLoading(true));
     const token = getState().auth.token;
 
-    await apiCall(`/applications/withdraw/${appId}`, {
+    await apiCall(`/application/withdraw/${appId}`, {
       method: 'DELETE',
     }, token);
 

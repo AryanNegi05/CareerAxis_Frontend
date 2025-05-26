@@ -13,9 +13,14 @@ const ApplicationModal = ({
   if (!isOpen || !job) return null;
 
   const handleSubmit = (e) => {
+
     e.preventDefault();
+    console.log("submit application data",job._id , applicationData);
     onSubmit(job._id, applicationData);
   };
+
+  console.log(job);
+  
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

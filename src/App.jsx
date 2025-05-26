@@ -8,7 +8,8 @@ import { loginSuccess } from './store/features/authSlice';
 
 import { CircularProgress, Box } from '@mui/material';
 import JobSeekerDashboard from './components/dashboard/JobSeekerBoard';
-
+import RecruiterDashboard from './components/recruiter/dashboard/RecruiterDashboard'
+import AdminDashboard from './components/Admin/dashboard/AdminDashboard';
 // Components
 import LandingPage from './components/LandingPage';
 import LoginPage from './components/auth/LoginPage';
@@ -59,16 +60,26 @@ function App() {
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route 
-            path="/login" 
-            element={
-              isAuthenticated ? (
-                <Navigate to={user?.role === 'jobseeker' ? '/dashboard/jobseeker' : '/dashboard/recruiter'} />
-              ) : (
-                 <LoginPage />
-              )
-              
-            } 
-          />
+  path="/login" 
+  element={
+    isAuthenticated ? (
+      <Navigate 
+        to={
+          user?.role === 'jobseeker' 
+            ? '/dashboard/jobseeker' 
+            : user?.role === 'recruiter' 
+              ? '/dashboard/recruiter' 
+              : user?.role === 'admin'
+                ? '/dashboard/admin'
+                : '/'  // fallback if role is none of the above
+        } 
+      />
+    ) : (
+      <LoginPage />
+    )
+  } 
+/>
+
           <Route 
             path="/signup" 
             element={
@@ -88,14 +99,24 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* <Route
+          <Route
             path="/dashboard/recruiter"
             element={
               <ProtectedRoute allowedRoles={['recruiter']}>
                 <RecruiterDashboard />
               </ProtectedRoute>
             }
-          /> */}
+          />
+
+          <Route
+  path="/dashboard/admin"
+  element={
+    <ProtectedRoute allowedRoles={['admin']}>
+      <AdminDashboard />
+    </ProtectedRoute>
+  }
+/>
+          
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
