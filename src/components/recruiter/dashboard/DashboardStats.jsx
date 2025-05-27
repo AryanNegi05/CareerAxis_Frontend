@@ -13,13 +13,15 @@ import {
 
 const DashboardStats = ({ jobs = [] }) => {
   const { applications } = useSelector(state => state.applications);
+  console.log(applications);
+  console.log(jobs);
   
   // Calculate stats from jobs data
   const stats = {
     totalJobs: jobs.length,
-    activeJobs: jobs.filter(job => job.status === 'active').length,
-    totalApplications: jobs.reduce((sum, job) => sum + (job.applicationsCount || 0), 0),
-    pendingApplications: applications.filter(app => app.status === 'pending').length
+    activeJobs: jobs.filter(job => job.status === 'open').length,
+    totalApplications: jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
+    // pendingApplications: applications.filter(app => app.status === 'pending').length
   };
 
   const statCards = [
@@ -44,13 +46,13 @@ const DashboardStats = ({ jobs = [] }) => {
       color: 'purple',
       description: 'Applications received'
     },
-    {
-      title: 'Pending Reviews',
-      value: stats.pendingApplications,
-      icon: Clock,
-      color: 'yellow',
-      description: 'Awaiting review'
-    }
+    // {
+    //   title: 'Pending Reviews',
+    //   value: stats.pendingApplications,
+    //   icon: Clock,
+    //   color: 'yellow',
+    //   description: 'Awaiting review'
+    // }
   ];
 
   const getColorClasses = (color) => {
@@ -135,7 +137,7 @@ const DashboardStats = ({ jobs = [] }) => {
                       <span className="mx-2">•</span>
                       <span>{job.type}</span>
                       <span className="mx-2">•</span>
-                      <span>{job.applicationsCount || 0} applications</span>
+                      <span>{job.applicationCount || 0} applications</span>
                     </div>
                     
                     <p className="mt-1 text-sm text-gray-600">

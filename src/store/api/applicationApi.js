@@ -42,6 +42,18 @@ export const getMyApplications = () => async (dispatch, getState) => {
   }
 };
 
+export const getAllRecruiterApplications = () => async (dispatch, getState) => {
+  try {
+    console.log("all recuiter pending appliactions lare  hai hum log abhi")
+    dispatch(setApplicationsLoading(true));
+    const token = getState().auth.token;
+    const data = await apiCall('/application/pending', {}, token);
+    dispatch(getMyApplicationsSuccess(data.pendingApps));
+  } catch (error) {
+    dispatch(applicationFailure(error.message));
+  }
+};
+
 // Get applications for a job (recruiter) (needs auth?)
 export const getJobApplications = (jobId) => async (dispatch, getState) => {
   try {

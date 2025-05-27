@@ -24,6 +24,11 @@ import {
   clearApplicationErrors 
 } from '../../../store/api/applicationApi';
 
+import {
+  
+  getJobSeekerProfileById
+} from '../../../store/api/profileApi';
+
 const ApplicationManagement = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -34,13 +39,17 @@ const ApplicationManagement = () => {
   const { user } = useSelector(state => state.auth);
   const { myJobs } = useSelector(state => state.jobs);
   const { applications, loading } = useSelector(state => state.applications);
+  const {viewedProfile} = useSelector((state) => state.profile);
+  console.log(applications);
 
   // Filter jobs to only show those belonging to verified recruiters
   const availableJobs = myJobs.filter(job => user?.verificationStatus === 'verified');
 
   useEffect(() => {
     if (selectedJob) {
+      console.log(selectedJob);
       dispatch(getJobApplications(selectedJob._id));
+      console.log("issjobs ki applications" , applications);
     }
   }, [selectedJob, dispatch]);
 
@@ -53,6 +62,13 @@ const ApplicationManagement = () => {
     setSelectedJob(job);
     setSelectedApplication(null);
   };
+
+  const handleViewProfile = (application) => {
+    dispatch(getJobSeekerProfileById(application.applicant._id));
+    console.log("applicant details" ,viewedProfile );
+    setSelectedApplication(application);
+  }
+
 
   const handleAcceptApplication = async (appId) => {
     try {
@@ -78,15 +94,15 @@ const ApplicationManagement = () => {
 
   const filteredApplications = applications.filter(app => {
     const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-    const matchesSearch = app.jobSeeker?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.jobSeeker?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.jobSeeker?.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = app.applicant?.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.applicant?.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         app.applicant?.email?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
+      case 'applied': return 'text-yellow-600 bg-yellow-100';
       case 'accepted': return 'text-green-600 bg-green-100';
       case 'rejected': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
@@ -95,7 +111,7 @@ const ApplicationManagement = () => {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'pending': return <Clock className="w-4 h-4" />;
+      case 'applied': return <Clock className="w-4 h-4" />;
       case 'accepted': return <CheckCircle className="w-4 h-4" />;
       case 'rejected': return <XCircle className="w-4 h-4" />;
       default: return <FileText className="w-4 h-4" />;
@@ -229,12 +245,12 @@ const ApplicationManagement = () => {
                         </div>
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {application.jobSeeker?.firstName} {application.jobSeeker?.lastName}
+                            {application.applicant?.firstName} {application.applicant?.lastName}
                           </h4>
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             <span className="flex items-center">
                               <Mail className="w-4 h-4 mr-1" />
-                              {application.jobSeeker?.email}
+                              {application.applicant?.email}
                             </span>
                             {application.jobSeeker?.phone && (
                               <span className="flex items-center">
@@ -268,9 +284,9 @@ const ApplicationManagement = () => {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          {application.jobSeeker?.profile?.resume && (
+                          {application.resume && (
                             <a
-                              href={application.jobSeeker.profile.resume}
+                              href={application.resume}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
@@ -281,7 +297,7 @@ const ApplicationManagement = () => {
                           )}
                           
                           <button
-                            onClick={() => setSelectedApplication(application)}
+                            onClick={() => handleViewProfile(application)}
                             className="inline-flex items-center px-3 py-1 text-sm text-gray-600 hover:text-gray-800"
                           >
                             <Eye className="w-4 h-4 mr-1" />
@@ -291,7 +307,7 @@ const ApplicationManagement = () => {
                       </div>
                     </div>
 
-                    {application.status === 'pending' && (
+                    {application.status === 'applied' && (
                       <div className="flex items-center gap-2 ml-4">
                         <button
                           onClick={() => handleAcceptApplication(application._id)}
@@ -327,7 +343,10 @@ const ApplicationManagement = () => {
                   Applicant Profile
                 </h3>
                 <button
-                  onClick={() => setSelectedApplication(null)}
+                  onClick={() => {
+                    setSelectedApplication(null)
+
+                  }}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <X className="w-6 h-6" />
@@ -344,32 +363,32 @@ const ApplicationManagement = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Name</label>
                       <p className="text-sm text-gray-900">
-                        {selectedApplication.jobSeeker?.firstName} {selectedApplication.jobSeeker?.lastName}
+                        {selectedApplication.applicant?.firstName} {selectedApplication.applicant?.lastName}
                       </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">Email</label>
-                      <p className="text-sm text-gray-900">{selectedApplication.jobSeeker?.email}</p>
+                      <p className="text-sm text-gray-900">{selectedApplication.applicant?.email}</p>
                     </div>
-                    {selectedApplication.jobSeeker?.phone && (
+                    {viewedProfile?.phone && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Phone</label>
-                        <p className="text-sm text-gray-900">{selectedApplication.jobSeeker?.phone}</p>
+                        <p className="text-sm text-gray-900">{viewedProfile.phone}</p>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Profile Details */}
-                {selectedApplication.jobSeeker?.profile && (
+                {viewedProfile && (
                   <div>
                     <h4 className="font-medium text-gray-900 mb-3">Profile Details</h4>
                     <div className="space-y-4">
-                      {selectedApplication.jobSeeker.profile.skills?.length > 0 && (
+                      {viewedProfile.skills?.length > 0 && (
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
                           <div className="flex flex-wrap gap-2">
-                            {selectedApplication.jobSeeker.profile.skills.map((skill, index) => (
+                            {viewedProfile.skills.map((skill, index) => (
                               <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
                                 {skill}
                               </span>
@@ -378,19 +397,47 @@ const ApplicationManagement = () => {
                         </div>
                       )}
                       
-                      {selectedApplication.jobSeeker.profile.experience && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Experience</label>
-                          <p className="text-sm text-gray-900">{selectedApplication.jobSeeker.profile.experience}</p>
-                        </div>
-                      )}
-                      
-                      {selectedApplication.jobSeeker.profile.education && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700">Education</label>
-                          <p className="text-sm text-gray-900">{selectedApplication.jobSeeker.profile.education}</p>
-                        </div>
-                      )}
+                      {viewedProfile.bio && (
+  <div>
+    <label className="block text-sm font-medium text-gray-700">Bio</label>
+    <p className="text-sm text-gray-900">{viewedProfile.bio}</p>
+  </div>
+)}
+
+{viewedProfile.experience?.length > 0 && (
+  <div>
+    <label className="block text-sm font-medium text-gray-700">Experience</label>
+    <ul className="list-disc ml-5 text-sm text-gray-900">
+      {viewedProfile.experience.map((exp, index) => (
+        <li key={index}>
+          <p><strong>Company:</strong> {exp.company}</p>
+          <p><strong>Position:</strong> {exp.position}</p>
+          <p><strong>Start Date:</strong> {exp.startDate}</p>
+          <p><strong>End Date:</strong> {exp.endDate}</p>
+          <p><strong>Description:</strong> {exp.description}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+{viewedProfile.education?.length > 0 && (
+  <div>
+    <label className="block text-sm font-medium text-gray-700">Education</label>
+    <ul className="list-disc ml-5 text-sm text-gray-900">
+      {viewedProfile.education.map((edu, index) => (
+        <li key={index}>
+          <p><strong>Institution:</strong> {edu.institution}</p>
+          <p><strong>Degree:</strong> {edu.degree}</p>
+          <p><strong>Field:</strong> {edu.field}</p>
+          <p><strong>Start Date:</strong> {edu.startDate}</p>
+          <p><strong>End Date:</strong> {edu.endDate}</p>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
                     </div>
                   </div>
                 )}

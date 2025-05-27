@@ -51,7 +51,7 @@ const RecruiterDashboard = () => {
       case 'overview':
         return <DashboardStats jobs={myJobs} />;
       case 'jobs':
-        return <JobManagement />;
+        return <JobManagement/>;
       case 'applications':
         return <ApplicationManagement />;
       case 'profile':

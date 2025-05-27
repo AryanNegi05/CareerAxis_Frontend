@@ -12,7 +12,8 @@ import {
   DollarSign,
   Clock,
   Users,
-  Briefcase
+  Briefcase,
+  XCircle
 } from 'lucide-react';
 import { getMyJobs, createJob, updateJob, deleteJob } from '../../../store/api/jobApi';
 import CreateJobModal from './CreateJobModal';
@@ -28,9 +29,11 @@ const JobManagement = () => {
 
   const dispatch = useDispatch();
   const { myJobs, loading, error } = useSelector(state => state.jobs);
+  const {user} = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(getMyJobs());
+    console.log("the recuiter jobs are" , myJobs);
   }, [dispatch]);
 
   // Filter jobs based on search and status
@@ -89,6 +92,28 @@ const JobManagement = () => {
     }
   };
 
+    if (user?.verificationStatus !== 'verified') {
+      return (
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="text-center">
+            <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              Verification Required
+            </h3>
+            <p className="text-gray-600 mb-4">
+              You need to be a verified recruiter to manage job applications.
+            </p>
+            <p className="text-sm text-gray-500">
+              {user?.verificationStatus === 'pending' 
+                ? 'Your verification is currently pending review.'
+                : 'Your verification was rejected. Please update your profile with correct documents.'
+              }
+            </p>
+          </div>
+        </div>
+      );
+    }
+
   return (
     <div className="space-y-6">
       {/* Header with Actions */}
@@ -129,8 +154,8 @@ const JobManagement = () => {
             className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 rounded-md"
           >
             <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="paused">Paused</option>
+            <option value="open">Active</option>
+            
             <option value="closed">Closed</option>
           </select>
         </div>
@@ -198,7 +223,9 @@ const JobManagement = () => {
                                 Edit Job
                               </button>
                               <button
-                                onClick={() => {/* View applications logic */}}
+                                onClick={() => {/* View applications logic */
+
+                                }}
                                 className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                               >
                                 <Eye className="w-4 h-4 mr-2" />
@@ -224,11 +251,14 @@ const JobManagement = () => {
                       </div>
                       <div className="flex items-center">
                         <DollarSign className="w-4 h-4 mr-1" />
-                        {job.salary || 'Salary not specified'}
+                        {job.salaryRange?.min && job.salaryRange?.max
+                          ? `₹${job.salaryRange.min} - ₹${job.salaryRange.max}`
+                          : 'Salary not specified'}
                       </div>
+
                       <div className="flex items-center">
                         <Users className="w-4 h-4 mr-1" />
-                        {job.applicationsCount || 0} applications
+                        {job.applicationCount || 0} applications
                       </div>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-1" />

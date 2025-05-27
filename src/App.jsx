@@ -40,9 +40,11 @@ const LoadingScreen = () => (
 function App() {
     const dispatch = useDispatch();
   const { isAuthenticated, user } = useSelector((state) => state.auth);
+  
 
   useEffect(() => {
     // Check if user is already logged in
+    
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     

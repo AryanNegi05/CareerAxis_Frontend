@@ -27,7 +27,9 @@ import {
 import {
   clearProfileError
 } from '../../../store/features/profileSlice'
-
+import {
+  getAllRecruiterApplications
+} from '../../../store/api/applicationApi';
 const ProfileSection = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -45,14 +47,19 @@ const ProfileSection = () => {
   });
   const [showCompanyChangeWarning, setShowCompanyChangeWarning] = useState(false);
   const [originalCompany, setOriginalCompany] = useState('');
+  
+
 
   const dispatch = useDispatch();
   const { user } = useSelector(state => state.auth);
   const { recruiterProfile, loading, error } = useSelector(state => state.profile);
+  const {myApplications , loading : applicationLoading  } = useSelector(state => state.applications);
 
   useEffect(() => {
     dispatch(getRecruiterProfile());
     console.log(recruiterProfile);
+    dispatch(getAllRecruiterApplications());
+    console.log(myApplications);
     return () => dispatch(clearProfileError());
   }, [dispatch]);
 
@@ -118,11 +125,18 @@ const ProfileSection = () => {
 const handleSubmit = async (e) => {
   e.preventDefault();
 
+  
+  if (formData.company !== originalCompany && myApplications.length > 0) {
+    alert('You are required to handle all your applications before changing your company');
+    return;
+  }
+
   // If company is changed and no verification document is provided
   if (formData.company !== originalCompany && !formData.verificationDoc) {
     alert('Please upload a verification document after changing the company.');
     return;
   }
+
 
   // Prepare data for submission
   const submitData = {};

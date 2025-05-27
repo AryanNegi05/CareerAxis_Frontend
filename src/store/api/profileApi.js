@@ -19,7 +19,7 @@ export const getJobSeekerProfile = () => async (dispatch, getState) => {
   try {
     dispatch(setProfileLoading(true));
     const token = getState().auth.token;
-
+    console.log('profile ki redux api')
     const data = await apiCall('/profile/jobseeker/MyProfile', {}, token);
 
     if (process.env.NODE_ENV === 'development') {
@@ -38,10 +38,12 @@ export const getJobSeekerProfileById = (userId) => async (dispatch, getState) =>
   try {
     dispatch(setProfileLoading(true));
     const token = getState().auth.token;
+    console.log("by id profile dhundhte hai")
 
     const data = await apiCall(`/profile/jobseeker/${userId}`, {}, token);
+    console.log(data);
 
-    dispatch(getJobSeekerProfileByIdSuccess(data.profile));
+    await dispatch(getJobSeekerProfileByIdSuccess(data.profile));
   } catch (error) {
     const errorMessage = error?.message || 'Failed to fetch profile';
     dispatch(profileFailure(errorMessage));
@@ -156,7 +158,11 @@ export const updateRecruiterProfile = (profileData) => async (dispatch, getState
     );
 
     dispatch(updateRecruiterProfileSuccess(data.profile));
-    dispatch(updateUserInfo({ verificationStatus: data.verificationStatus })); // ✅ Correct
+    dispatch(updateUserInfo({ verificationStatus: data.verificationStatus }));
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    storedUser.verificationStatus = 'pending';
+    localStorage.setItem('user', JSON.stringify(storedUser));
+      // ✅ Correct
 
   } catch (error) {
     dispatch(profileFailure(error.message));
