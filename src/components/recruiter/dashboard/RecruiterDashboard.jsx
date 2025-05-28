@@ -12,22 +12,36 @@ import {
 } from 'lucide-react';
 import { getRecruiterProfile } from '../../../store/api/profileApi'
 import { getMyJobs } from '../../../store/api/jobApi';  
-import { logout } from '../../../store/api/authApi';
+import { fetchLatestUserInfo, logout } from '../../../store/api/authApi';
 import DashboardStats from './DashboardStats';
 import JobManagement from './JobManagement';
 import ApplicationManagement from './ApplicationManagement';
 import ProfileSection from './ProfileManagement';
+import {
+  getAllRecruiterApplications
+} from '../../../store/api/applicationApi';
 
 const RecruiterDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const dispatch = useDispatch();
   
   const { user } = useSelector(state => state.auth);
+//   if (storedUser && data.verificationStatus) {
+//   storedUser.verificationStatus = data.verificationStatus;
+//   localStorage.setItem('user', JSON.stringify(storedUser));
+// }
   console.log(user);
   const { recruiterProfile, loading: profileLoading } = useSelector(state => state.profile);
   const { myJobs, loading: jobsLoading } = useSelector(state => state.jobs);
+  const {myApplications , loading : applicationLoading  } = useSelector(state => state.applications);
 
   useEffect(() => {
+    dispatch(fetchLatestUserInfo());
+  },[])
+
+  useEffect(() => {
+    dispatch(getAllRecruiterApplications());
+        console.log(myApplications);
     // Fetch recruiter profile and jobs on component mount
     dispatch(getRecruiterProfile());
 
@@ -49,7 +63,7 @@ const RecruiterDashboard = () => {
   const renderTabContent = () => {
     switch(activeTab) {
       case 'overview':
-        return <DashboardStats jobs={myJobs} />;
+        return <DashboardStats jobs={myJobs} myApplications={myApplications}/>;
       case 'jobs':
         return <JobManagement/>;
       case 'applications':

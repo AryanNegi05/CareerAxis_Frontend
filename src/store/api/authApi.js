@@ -6,6 +6,7 @@ import {
   authFailure,
   logout as logoutAction,
   clearError,
+  updateUserInfo
 } from '../features/authSlice';
 import { clearAllProfilesData } from '../api/profileApi';
 // import { clearAllApplicationsData } from '../api/profileApi';
@@ -106,4 +107,18 @@ export const logout = () => (dispatch) => {
 // Clear auth error
 export const clearAuthError = () => (dispatch) => {
   dispatch(clearError());
+};
+
+export const fetchLatestUserInfo = () => async (dispatch, getState) => {
+  const token = getState().auth.token;
+
+  try {
+    const data = await apiCall('/auth/me', {}, token); // or /profile/me
+    dispatch(updateUserInfo(data.user)); // update Redux
+    const storedUser = JSON.parse(localStorage.getItem('user')) || {};
+    const updatedUser = { ...storedUser, ...data.user };
+    localStorage.setItem('user', JSON.stringify(updatedUser)); // update localStorage
+  } catch (error) {
+    console.error("Failed to fetch latest user info:", error.message);
+  }
 };

@@ -11,17 +11,18 @@ import {
   XCircle
 } from 'lucide-react';
 
-const DashboardStats = ({ jobs = [] }) => {
-  const { applications } = useSelector(state => state.applications);
-  console.log(applications);
-  console.log(jobs);
+const DashboardStats = ({ jobs = [] , myApplications = []}) => {
+  console.log(myApplications);
+  // const { applications } = useSelector(state => state.applications);
+  // console.log(applications);
+  // console.log(jobs);
   
   // Calculate stats from jobs data
   const stats = {
     totalJobs: jobs.length,
     activeJobs: jobs.filter(job => job.status === 'open').length,
     totalApplications: jobs.reduce((sum, job) => sum + (job.applicationCount || 0), 0),
-    // pendingApplications: applications.filter(app => app.status === 'pending').length
+    pendingApplications: myApplications.filter(app => app.status === 'applied').length
   };
 
   const statCards = [
@@ -46,13 +47,13 @@ const DashboardStats = ({ jobs = [] }) => {
       color: 'purple',
       description: 'Applications received'
     },
-    // {
-    //   title: 'Pending Reviews',
-    //   value: stats.pendingApplications,
-    //   icon: Clock,
-    //   color: 'yellow',
-    //   description: 'Awaiting review'
-    // }
+    {
+      title: 'Pending Reviews',
+      value: stats.pendingApplications,
+      icon: Clock,
+      color: 'yellow',
+      description: 'Awaiting review'
+    }
   ];
 
   const getColorClasses = (color) => {
