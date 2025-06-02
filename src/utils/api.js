@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://careeraxis-backend-1.onrender.com';
+const API_BASE_URL = 'https://careeraxis-backend-1.onrender.com/api/v1';
 
 const apiCall = async (endpoint, options = {}, token) => {
   try {
