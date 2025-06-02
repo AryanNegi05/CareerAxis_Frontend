@@ -346,7 +346,7 @@ const EditJobModal = ({ isOpen, onClose, onSubmit, job }) => {
                         </div>
                       )}
                       <span className={loading ? 'opacity-0' : 'opacity-100'}>
-                        ✏️ Update Job
+                         Update Job
                       </span>
                     </button>
                   </div>

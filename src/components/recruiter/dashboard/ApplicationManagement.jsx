@@ -211,7 +211,7 @@ const ApplicationManagement = () => {
                           <Users className="w-4 h-4 text-white" />
                         </div>
                         <span className="text-sm font-semibold text-gray-700">
-                          {job.applicationsCount || 0} applications
+                          {job.applicationCount || 0} applications
                         </span>
                       </div>
                       <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
@@ -270,10 +270,10 @@ const ApplicationManagement = () => {
                   onChange={(e) => setStatusFilter(e.target.value)}
                   className="bg-white/20 backdrop-blur-sm border border-white/30 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all duration-200"
                 >
-                  <option value="all">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="accepted">Accepted</option>
-                  <option value="rejected">Rejected</option>
+                  <option value="all" className='text-slate-700'>All Status</option>
+                  <option value="pending" className='text-slate-700'>Pending</option>
+                  <option value="accepted" className='text-slate-700'>Accepted</option>
+                  <option value="rejected" className='text-slate-700'>Rejected</option>
                 </select>
               </div>
             </div>
@@ -484,8 +484,9 @@ const ApplicationManagement = () => {
                               <div key={index} className="bg-white rounded-lg p-4 border border-orange-200 shadow-sm">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                   <div>
-                                    <p className="font-semibold text-gray-900">{exp.company}</p>
-                                    <p className="text-gray-700">{exp.position}</p>
+                                    <p className="text-gray-900 text-lg font-bold">{exp.position}</p>
+                                    <p className="font-semibold text-gray-700">{exp.company}</p>
+                                    
                                   </div>
                                   <div>
                                     <p className="text-sm text-gray-600">{exp.startDate} - {exp.endDate}</p>

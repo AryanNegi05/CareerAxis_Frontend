@@ -24,10 +24,11 @@ const AdminStats = () => {
 
   useEffect(() => {
     dispatch(getPendingRecruiters());
-    // dispatch(getAllUsers());
+    dispatch(getAllUsers());
     dispatch(getAllJobs());
     console.log(jobs);
-    
+    console.log(pendingRecruiters);
+    console.log(allUsers);
     // Trigger animations after component mounts
     setTimeout(() => setIsLoaded(true), 100);
   }, [dispatch]);
@@ -36,10 +37,11 @@ const AdminStats = () => {
   const totalUsers = allUsers.length;
   const totalJobSeekers = allUsers.filter(user => user.role === 'jobseeker').length;
   const totalRecruiters = allUsers.filter(user => user.role === 'recruiter').length;
-  const verifiedRecruiters = allUsers.filter(user => user.role === 'recruiter' && user.isVerified).length;
+  const verifiedRecruiters = allUsers.filter(user => user.role === 'recruiter' && user.verificationStatus === 'verified').length;
+  console.log(verifiedRecruiters);
   const pendingCount = pendingRecruiters.length;
   const totalJobs = jobs.length;
-  const activeJobs = jobs.filter(job => job.status === 'active').length;
+  const activeJobs = jobs.filter(job => job.status === 'open').length;
 
   // Animated counter effect
   const animateValue = (start, end, duration, key) => {

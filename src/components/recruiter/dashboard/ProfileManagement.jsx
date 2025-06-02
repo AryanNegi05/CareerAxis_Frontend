@@ -311,7 +311,7 @@ const handleSubmit = async (e) => {
                   </div>
                   <div className="ml-4">
                     <h3 className="text-lg font-semibold text-yellow-800 mb-2">Verification In Progress</h3>
-                    <p className="text-yellow-700">Your account is currently under review. You'll receive an email notification once verification is complete. This typically takes 1-2 business days.</p>
+                    <p className="text-yellow-700">Your account is currently under review. This typically takes 1-2 business days.</p>
                   </div>
                 </div>
               </div>

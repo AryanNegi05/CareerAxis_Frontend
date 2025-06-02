@@ -36,7 +36,7 @@ const LoginPage = () => {
             : data.user.role === 'recruiter'
             ? '/dashboard/recruiter'
             : data.user.role === 'admin'
-            ? '/dashboard/dashboard'
+            ? '/dashboard/admin'
             : '/'
         );
       } else {

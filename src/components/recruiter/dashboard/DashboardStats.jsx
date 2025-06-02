@@ -9,7 +9,7 @@ import {
   Clock,
 } from 'lucide-react';
 
-const DashboardStats = ({ jobs = [], myApplications = [] }) => {
+const DashboardStats = ({ jobs = [], myApplications = []  ,activeTab , setActiveTab}) => {
   const stats = {
     totalJobs: jobs.length,
     activeJobs: jobs.filter(job => job.status === 'open').length,
@@ -24,6 +24,7 @@ const DashboardStats = ({ jobs = [], myApplications = [] }) => {
       icon: Briefcase,
       color: 'blue',
       description: 'Jobs posted'
+      
     },
     {
       title: 'Active Jobs',
@@ -139,7 +140,7 @@ const DashboardStats = ({ jobs = [], myApplications = [] }) => {
                     <div className="mt-1 flex items-center text-sm text-gray-500">
                       <span>{job.location}</span>
                       <span className="mx-2">•</span>
-                      <span>{job.type}</span>
+                      <span>{job.jobType}</span>
                       <span className="mx-2">•</span>
                       <span>{job.applicationCount || 0} applications</span>
                     </div>
@@ -174,25 +175,32 @@ const DashboardStats = ({ jobs = [], myApplications = [] }) => {
                 title: 'Post New Job',
                 description: 'Create and publish a new job posting',
                 icon: Briefcase,
-                color: 'bg-blue-50 text-blue-700'
+                color: 'bg-blue-50 text-blue-700',
+                tab : 'jobs'
               },
               {
                 title: 'Review Applications',
                 description: 'Review and manage job applications',
                 icon: Users,
-                color: 'bg-green-50 text-green-700'
+                color: 'bg-green-50 text-green-700',
+                tab : 'applications'
               },
               {
                 title: 'Update Profile',
                 description: 'Manage your recruiter profile',
                 icon: FileText,
-                color: 'bg-purple-50 text-purple-700'
+                color: 'bg-purple-50 text-purple-700',
+                tab : 'profile'
               }
             ].map((action, idx) => (
               <motion.button
                 key={idx}
                 whileHover={{ scale: 1.02 }}
                 className="relative group bg-white p-6 border border-gray-300 rounded-lg shadow-sm space-y-4 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={() => {
+                  setActiveTab(action.tab);
+
+                }}
               >
                 <div>
                   <span className={`rounded-lg inline-flex p-3 ${action.color} ring-4 ring-white`}>

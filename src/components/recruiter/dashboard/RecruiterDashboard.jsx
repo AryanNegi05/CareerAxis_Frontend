@@ -63,7 +63,7 @@ const RecruiterDashboard = () => {
   const renderTabContent = () => {
     switch(activeTab) {
       case 'overview':
-        return <DashboardStats jobs={myJobs} myApplications={myApplications}/>;
+        return <DashboardStats jobs={myJobs} myApplications={myApplications} activeTab = {activeTab}  setActiveTab = {setActiveTab}/>;
       case 'jobs':
         return <JobManagement/>;
       case 'applications':
@@ -195,7 +195,7 @@ const RecruiterDashboard = () => {
                     Verification Pending
                   </h3>
                   <div className="mt-2 text-sm text-yellow-700">
-                    <p>Your account verification is currently pending. Some features may be limited until verification is complete.</p>
+                    <p>Your account verification is currently pending. Some features may be limited until verification is complete. To complete verification kindly upload verifications documents in Profile Section</p>
                   </div>
                 </div>
               </div>
