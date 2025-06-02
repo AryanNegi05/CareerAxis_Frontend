@@ -8,7 +8,7 @@ export default defineConfig({
     port : 5173,
     proxy : {
       'api/v1' : {
-        target : 'http://localhost:4000',
+        target : 'https://careeraxis-backend-1.onrender.com',
         changeOrigin : true,
         secure : true,
       }
